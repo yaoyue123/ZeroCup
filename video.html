@@ -1,0 +1,283 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <title>AI-时代</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+
+<body class="subpage">
+  <!-- Header -->
+  <header id="header" class="alt">
+    <div class="logo"><a href="index.html">AI-时代 <span>by mcj & wmj</span></a></div>
+    <a href="#menu"><span>Menu</span></a>
+  </header>
+  <!-- Nav -->
+  <nav id="menu">
+    <ul class="links">
+      <li><a href="index.html">主页</a></li>
+      <li><a href="about.html">概论</a></li>
+      <li><a href="aibot.html">自然语言处理</a></li>
+      <li><a href="game.html">遗传算法</a></li>
+      <li><a href="video.html">语音识别</a></li>
+    </ul>
+  </nav>
+  <section id="post" class="wrapper bg-img" data-bg="banner6.jpg">
+    <div class="inner">
+      <article class="box">
+        <header>
+          <h2>语音识别控制视频</h2>
+          <p>voice control</p>
+        </header>
+        <div align="center">
+          <!-- <uidiv> -->
+          <div id="warning">
+            <h1 style="font-weight:500;"></h1>
+          </div>
+          <div id="content" style="display:none">
+            <table width="100%">
+              <tr>
+                <td align="center"><a
+                    href="https://docs.microsoft.com/azure/cognitive-services/speech-service/get-started"
+                    target="_blank"></a></td>
+                <td><input id="subscriptionKey" type="text" size="40" value="subscription"></td>
+              </tr>
+              <tr>
+                <td align="center"></td>
+                <td><input id="serviceRegion" type="text" size="40" value="YourServiceRegion"></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td><button id="startRecognizeOnceAsyncButton">开始识别</button></td>
+              </tr>
+            </table>
+          </div>
+          <video id="v" controls preload="metadata">
+            <source src="video/big-buck-bunny.mp4" type="video/mp4">
+          </video>
+          <p>
+            点击 "开始识别",请授予麦克风访问权限<br>并开始通过语音(英语)来控制视频的播放和音量。
+            <br>
+            可用的命令如下:
+          </p>
+          <ul>
+            <li id="vidPlay">"video play"</li>
+            <li id="vidStop">"video stop"</li>
+            <li id="vidReplay">"video replay"</li>
+            <li id="vidVolOn">"video volume on"</li>
+            <li id="vidVolOff">"video volume off"</li>
+            <li id="vidVolInc">"video volume increase"</li>
+            <li id="vidVolDec">"video volume decrease"</li>
+          </ul>
+          <script src="microsoft.cognitiveservices.speech.sdk.bundle.js"></script>
+          <script>
+            var authorizationEndpoint = "token.php";
+            function RequestAuthorizationToken() {
+              if (authorizationEndpoint) {
+                var a = new XMLHttpRequest();
+                a.open("GET", authorizationEndpoint);
+                a.setRequestHeader("Content-Type", "https://westus.api.cognitive.microsoft.com/sts/v1.0");
+                a.send("");
+                a.onload = function () {
+                  var token = JSON.parse(atob(this.responseText.split(".")[1]));
+                  serviceRegion.value = token.region;
+                  authorizationToken = this.responseText;
+                  subscriptionKey.disabled = true;
+                  subscriptionKey.value = "using authorization token (hit F5 to refresh)";
+                  console.log("Got an authorization token: " + token);
+                }
+              }
+            }
+          </script>
+          <!-- </authorizationfunction> -->
+          <!-- <quickstartcode> -->
+          <!-- Speech SDK USAGE -->
+          <script>
+            // status fields and start button in UI
+            var phraseDiv;
+            var startRecognizeOnceAsyncButton;
+            // subscription key and region for speech services.
+            var subscriptionKey, serviceRegion;
+            var authorizationToken;
+            var SpeechSDK;
+            var recognizer;
+            var video = document.getElementById('v');
+            //var recStatus = document.getElementById('recStatus');
+            document.addEventListener("DOMContentLoaded", function () {
+              startRecognizeOnceAsyncButton = document.getElementById("startRecognizeOnceAsyncButton");
+              subscriptionKey = document.getElementById("subscriptionKey");
+              serviceRegion = document.getElementById("serviceRegion");
+              //phraseDiv = document.getElementById("phraseDiv");
+              subscriptionKey.value = "f5f2061567454dac9ec268393ace74bc";
+              serviceRegion.value = "westus";
+              startRecognizeOnceAsyncButton.addEventListener("click", function () {
+                startRecognizeOnceAsyncButton.disabled = true;
+                //phraseDiv.innerHTML = "";
+                // if we got an authorization token, use the token. Otherwise use the provided subscription key
+                var speechConfig;
+                if (authorizationToken) {
+                  speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(authorizationToken, serviceRegion.value);
+                } else {
+                  if (subscriptionKey.value === "" || subscriptionKey.value === "subscription") {
+                    alert("Please enter your Microsoft Cognitive Services Speech subscription key!");
+                    return;
+                  }
+                  speechConfig = SpeechSDK.SpeechConfig.fromSubscription(subscriptionKey.value, serviceRegion.value);
+                }
+                speechConfig.speechRecognitionLanguage = "en-US";
+                var audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+                recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+                recognizer.recognizeOnceAsync(
+                  function (result) {
+                    startRecognizeOnceAsyncButton.disabled = false;
+                    //phraseDiv.innerHTML += result.text;
+                    window.console.log(result);
+                    //recStatus.innerHTML = "recognizing";
+                    // Simple function that checks existence of s in str
+                    var userSaid = function (str, s) {
+                      return str.indexOf(s) > -1;
+                    }
+                    // Highlights the relevant command that was recognised in the command list for display purposes
+                    var highlightCommand = function (cmd) {
+                      var el = document.getElementById(cmd);
+                      el.setAttribute('data-state', 'highlight');
+                      setTimeout(function () {
+                        el.setAttribute('data-state', '');
+                      }, 3000);
+                    }
+                    // Process the results when they are returned from the recogniser
+                    if (userSaid(result.text, 'ideo')) {
+                      // Replay the video
+                      if (userSaid(result.text, 'replay')) {
+                        video.currentTime = 0;
+                        video.play();
+                        highlightCommand('vidReplay');
+                      }
+                      // Play the video
+                      else if (userSaid(result.text, 'play')) {
+                        video.play();
+                        highlightCommand('vidPlay');
+                      }
+                      // Stop the video
+                      else if (userSaid(result.text, 'stop')) {
+                        video.pause();
+                        highlightCommand('vidStop');
+                      }
+                      // If the user said 'volume' then parse it even further
+                      else if (userSaid(result.text, 'olume')) {
+                        // Check the current volume setting of the video
+                        var vol = Math.floor(video.volume * 10) / 10;
+                        // Increase the volume
+                        if (userSaid(result.text, 'increase')) {
+                          if (vol >= 0.9) video.volume = 1;
+                          else video.volume += 0.1;
+                          highlightCommand('vidVolInc');
+                        }
+                        // Decrease the volume
+                        else if (userSaid(result.text, 'decrease')) {
+                          if (vol <= 0.1) video.volume = 0;
+                          else video.volume -= 0.1;
+                          highlightCommand('vidVolDec');
+                        }
+                        // Turn the volume off (mute)
+                        else if (userSaid(result.text, 'of')) {
+                          video.muted = true;
+                          highlightCommand('vidVolOff');
+                        }
+                        // Turn the volume on (unmute)
+                        else if (userSaid(result.text, 'on')) {
+                          video.muted = false;
+                          highlightCommand('vidVolOn');
+                        }
+                      }
+                    }
+                    recognizer.close();
+                    recognizer = undefined;
+                  },
+                  function (err) {
+                    startRecognizeOnceAsyncButton.disabled = false;
+                    //phraseDiv.innerHTML += err;
+                    window.console.log(err);
+                    recognizer.close();
+                    recognizer = undefined;
+                  }
+                );
+              });
+              if (!!window.SpeechSDK) {
+                SpeechSDK = window.SpeechSDK;
+                startRecognizeOnceAsyncButton.disabled = false;
+                document.getElementById('content').style.display = 'block';
+                document.getElementById('warning').style.display = 'none';
+                document.getElementById('subscriptionKey').style.display = 'none';
+                document.getElementById("serviceRegion").style.display = 'none';
+                // in case we have a function for getting an authorization token, call it.
+                if (typeof RequestAuthorizationToken === "function") {
+                  RequestAuthorizationToken();
+                }
+              }
+            });
+          </script>
+          <!-- </quickstartcode> -->
+        </div>
+        <footer>
+          <ul class="actions">
+            <li><a href="#" class="button alt icon fa-chevron-left"><span class="label">Previous</span></a>
+            </li>
+            <li><a href="#" class="button alt icon fa-chevron-right"><span class="label">Next</span></a>
+            </li>
+          </ul>
+        </footer>
+      </article>
+    </div>
+  </section>
+  <!-- Footer -->
+  <footer id="footer">
+    <div class="inner">
+
+      <h2>告诉我们你的评价</h2>
+
+      <form action="#" method="post">
+
+        <div class="field half first">
+          <label for="name">姓名</label>
+          <input name="name" id="name" type="text" placeholder="Name">
+        </div>
+        <div class="field half">
+          <label for="email">邮箱</label>
+          <input name="email" id="email" type="email" placeholder="Email">
+        </div>
+        <div class="field">
+          <label for="message">消息</label>
+          <textarea name="message" id="message" rows="6" placeholder="Message"></textarea>
+        </div>
+        <ul class="actions">
+          <li><input value="发送" class="button alt" type="submit"></li>
+        </ul>
+      </form>
+
+      <ul class="icons">
+        <li><a href="#" class="icon round fa-weixin"><span class="label">微信</span></a></li>
+        <li><a href="#" class="icon round fa-qq"><span class="label">QQ</span></a></li>
+        <li><a href="#" class="icon round fa-weibo"><span class="label">微博</span></a></li>
+      </ul>
+
+      <div class="copyright">
+        &copy; Schoool: <a href="https://www.whu.edu.cn/">WHU</a>. Online Demo: <a
+          href="http://host6fed6905f.hk-host.ydidc.top/">ai时代</a>.
+      </div>
+
+    </div>
+  </footer>
+  <!-- Scripts -->
+  <script src="microsoft.cognitiveservices.speech.sdk.bundle.js"></script>
+  <script src="assets/js/jquery.min.js"></script>
+  <script src="assets/js/jquery.scrolly.min.js"></script>
+  <script src="assets/js/jquery.scrollex.min.js"></script>
+  <script src="assets/js/skel.min.js"></script>
+  <script src="assets/js/util.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+
+</html>
