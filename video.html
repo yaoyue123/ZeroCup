@@ -37,26 +37,30 @@
             <h1 style="font-weight:500;"></h1>
           </div>
           <div id="content" style="display:none">
-            <table width="100%">
-              <tr>
-                <td align="center"><a
-                    href="https://docs.microsoft.com/azure/cognitive-services/speech-service/get-started"
-                    target="_blank"></a></td>
-                <td><input id="subscriptionKey" type="text" size="40" value="subscription"></td>
-              </tr>
-              <tr>
-                <td align="center"></td>
-                <td><input id="serviceRegion" type="text" size="40" value="YourServiceRegion"></td>
-              </tr>
-              <tr>
-                <td></td>
-                <td><button id="startRecognizeOnceAsyncButton">开始识别</button></td>
-              </tr>
-            </table>
+
+            <tr>
+              <td align="center"><a
+                  href="https://docs.microsoft.com/azure/cognitive-services/speech-service/get-started"
+                  target="_blank"></a></td>
+              <td><input id="subscriptionKey" type="text" size="40" value="subscription"></td>
+            </tr>
+            <tr>
+              <td align="center"></td>
+              <td><input id="serviceRegion" type="text" size="40" value="YourServiceRegion"></td>
+            </tr>
+
           </div>
           <video id="v" controls preload="metadata">
             <source src="video/big-buck-bunny.mp4" type="video/mp4">
           </video>
+          <br>
+          <br>
+          <tr>
+            <td></td>
+            <td><button id="startRecognizeOnceAsyncButton">开始识别</button></td>
+          </tr>
+          <br>
+          <br>
           <p>
             点击 "开始识别",请授予麦克风访问权限<br>并开始通过语音(英语)来控制视频的播放和音量。
             <br>
